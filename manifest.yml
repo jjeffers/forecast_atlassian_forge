@@ -1,0 +1,21 @@
+modules:
+  jira:globalPage:
+    - key: forecast-global-page
+      resource: main
+      resolver:
+        function: resolver
+      render: native
+      title: forecast
+  function:
+    - key: resolver
+      handler: index.handler
+resources:
+  - key: main
+    path: src/frontend/index.jsx
+permissions:
+  scopes:
+    - 'read:jira-work'
+app:
+  runtime:
+    name: nodejs18.x
+  id: ari:cloud:ecosystem::app/13e1ba44-0e2b-4d70-a66a-0a914e2db088
