@@ -1,6 +1,8 @@
-# Forge Hello World
+# Forge Forecast
 
-This project contains a Forge app written in JavaScript that displays `Hello World!` in a Jira global page.
+This project contains a Forge app written in JavaScript that generates an issue completion forecast in a Jira global page.
+
+The original version was written as an Atlassian Connect application. The original project repository is [here](https://gitlab.com/jjeffers/forecast).
 
 See [developer.atlassian.com/platform/forge/](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
 
