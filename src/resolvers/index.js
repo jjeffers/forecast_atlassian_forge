@@ -1,5 +1,6 @@
 import Resolver from '@forge/resolver';
 import api, { route } from "@forge/api";
+import { getCountsPerPeriod } from "./calculations";
 
 const resolver = new Resolver();
 
@@ -45,6 +46,10 @@ resolver.define('generateReport', async (req) => {
   const trailing15WeeksIssuesClosed = await getTrailing15WeeksClosedIssues(projectId);
 
   console.log(`Trailing 15 weeks issues closed found ${trailing15WeeksIssuesClosed.length} issues.`);
+
+  const countsByPeriod = getCountsPerPeriod(trailing15WeeksIssuesClosed, 1);
+
+  console.log(`Counts by period: ${JSON.stringify(countsByPeriod)}`);
 
   const report = { 
     project_id: projectData.id,
