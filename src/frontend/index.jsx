@@ -15,7 +15,7 @@ const App = () => {
 
   function handleProjectSelecton(id) {
     setProjectId(id);
-    invoke('generateReport', { projectId: projectId })
+    invoke('generateReport', { projectId: id })
       .then((data) => {
         console.log("Current report: ");
         console.log(data);

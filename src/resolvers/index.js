@@ -3,18 +3,48 @@ import api, { route } from "@forge/api";
 
 const resolver = new Resolver();
 
+const getTrailing15WeeksClosedIssues = async (projectId) => {
+  let results = [];
+  let next = true;
+
+  console.log("getting trailing 15 weeks closed issues...")
+  const request_route = route`/rest/api/3/search?jql=project=${projectId} AND status=Done AND resolved >= -15w&limit=100&startAt=0`;
+
+  while (next) {
+    const response = await api.asUser()
+      .requestJira(request_route, {
+        headers: {
+          'Accept': 'application/json'
+        }
+    });
+
+    const data = await response.json();
+
+    results = results.concat(data.issues);
+    data.next? next = data.next : next = false;
+  }
+
+  return results;
+}
+
 resolver.define('generateReport', async (req) => {
-  console.log(`Generating report for project id ${req.payload.projectId}...`);
+  const projectId = req.payload.projectId;
+  
+  console.log(`Generating report for project id ${projectId}...`);
 
   const response = await api.asUser()
-    .requestJira(route`/rest/api/3/project/${req.payload.projectId}`, {
+    .requestJira(route`/rest/api/3/project/${projectId}`, {
       headers: {
         'Accept': 'application/json'
       }
   });
 
   const projectData = await response.json();
-  console.log(`Project data: ${projectData}`);
+  console.log(`Project data: ${projectData.name} id ${projectData.id}`);
+
+  const trailing15WeeksIssuesClosed = await getTrailing15WeeksClosedIssues(projectId);
+
+  console.log(`Trailing 15 weeks issues closed found ${trailing15WeeksIssuesClosed.length} issues.`);
 
   const report = { 
     project_id: projectData.id,
