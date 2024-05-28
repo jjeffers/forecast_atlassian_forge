@@ -1,7 +1,6 @@
 var ss = require('simple-statistics')
 
-function getCountsPerPeriod(issues, period_length_in_days=1, now=Date.now()) {
-    
+function getCountsPerPeriod(issues, period_length_in_days=1, now=new Date()) {
     if (period_length_in_days < 0) {
         throw new Error("Period length must be greater than zero");
     }

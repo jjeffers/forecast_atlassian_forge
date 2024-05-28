@@ -5,6 +5,17 @@ const { describe, it } = require('node:test');
 const { getCountsPerPeriod } = require('../../../src/resolvers/calculations');
 
 describe('getCountsPerPriod', () => {
+    it('should generate a hash of counts by period (in time elapsed) with default time (now)', () => {
+
+        issues = [
+            { resolutiondate: "2021-07-06" }
+        ]
+        let counts = getCountsPerPeriod(issues, 1);
+        
+        assert.strictEqual(Object.keys(counts).length, 1);
+    });
+
+
     it('should generate a hash of counts by period (in time elapsed)', () => {
 
         issues = [
@@ -23,4 +34,6 @@ describe('getCountsPerPriod', () => {
 
         assert.throws(function() { getCountsPerPeriod(issues, -1, new Date("2021-07-01"))}, Error);
     });
+
+    
 });
