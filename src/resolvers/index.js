@@ -1,5 +1,8 @@
 import Resolver from '@forge/resolver';
 import api, { route } from "@forge/api";
+import { storage } from "@forge/api";
+import { Queue } from '@forge/events';
+
 import { calculateConfidenceIntervals, getCountsPerPeriod } from "./calculations";
 
 const resolver = new Resolver();
@@ -52,11 +55,31 @@ const getCurrentBacklogIssues = async (projectId) => {
   return results;
 }
 
-
-resolver.define('generateReport', async (req) => {
+resolver.define('getCurrentReport', async (req) => {
   const projectId = req.payload.projectId;
-  
-  console.log(`Generating report for project id ${projectId}...`);
+
+  console.log(`Checking for cached report for project id ${projectId}...`);
+  const currentReport = await storage.get(projectId);
+
+  if (currentReport) {
+    console.log(`Cached report found for project id ${projectId}`);
+    return currentReport;
+  }
+  else {
+    console.log(`No cached report found for project id ${projectId}`);
+    return {};
+  }
+});
+
+resolver.define('generateCurrentReport', async (req) => {
+  const projectId = req.payload.projectId;
+  const queueName = 'reports';
+  const jobId = null;
+
+  console.log(`Generating new report for ${projectId}...`);
+
+  //const queue = new Queue({ key: queueName });
+  //queue.push(projectId);
 
   const response = await api.asUser()
     .requestJira(route`/rest/api/3/project/${projectId}`, {
@@ -68,18 +91,18 @@ resolver.define('generateReport', async (req) => {
   const projectData = await response.json();
   console.log(`Project data: ${projectData.name} id ${projectData.id}`);
 
-  const trailing15WeeksIssuesClosed = await getTrailing15WeeksClosedIssues(projectId);
-  console.log(`Trailing 15 weeks issues closed found ${trailing15WeeksIssuesClosed.length} issues.`);
+  //const trailing15WeeksIssuesClosed = await getTrailing15WeeksClosedIssues(projectId);
+  //console.log(`Trailing 15 weeks issues closed found ${trailing15WeeksIssuesClosed.length} issues.`);
 
-  const countsByPeriod = getCountsPerPeriod(trailing15WeeksIssuesClosed, 1);
-  console.log(`Counts by period: ${JSON.stringify(countsByPeriod)}`);
+  //const countsByPeriod = getCountsPerPeriod(trailing15WeeksIssuesClosed, 1);
+  //console.log(`Counts by period: ${JSON.stringify(countsByPeriod)}`);
 
-  const currentBacklogIssues = await getCurrentBacklogIssues(projectId);
-  console.log(`Current backlog issues found ${currentBacklogIssues.length} issues.`);
+  //const currentBacklogIssues = await getCurrentBacklogIssues(projectId);
+  //console.log(`Current backlog issues found ${currentBacklogIssues.length} issues.`);
 
-  const confidenceIntervals = calculateConfidenceIntervals(currentBacklogIssues, countsByPeriod);
-  console.log(`Confidence intervals: ${JSON.stringify(confidenceIntervals)}`);
-  
+  //const confidenceIntervals = calculateConfidenceIntervals(currentBacklogIssues, countsByPeriod);
+  //console.log(`Confidence intervals: ${JSON.stringify(confidenceIntervals)}`);
+
   const report = { 
     project_id: projectData.id,
     project_name: projectData.name,
@@ -96,7 +119,7 @@ resolver.define('generateReport', async (req) => {
     ]
   }
 
-  return report;
+  return 1;
 })
 
 resolver.define('getProjects', async (req) => {
