@@ -1,6 +1,6 @@
 import Resolver from '@forge/resolver';
 import api, { route } from "@forge/api";
-import { getCountsPerPeriod } from "./calculations";
+import { calculateConfidenceIntervals, getCountsPerPeriod } from "./calculations";
 
 const resolver = new Resolver();
 
@@ -28,6 +28,31 @@ const getTrailing15WeeksClosedIssues = async (projectId) => {
   return results;
 }
 
+const getCurrentBacklogIssues = async (projectId) => {
+  let results = [];
+  let next = true;
+
+  console.log("getting current backlog issues...")
+  const request_route = route`/rest/api/3/search?jql=project=${projectId} AND Resolution is NULL ORDER BY Rank ASC&limit=100&startAt=0`;
+
+  while (next) {
+    const response = await api.asUser()
+      .requestJira(request_route, {
+        headers: {
+          'Accept': 'application/json'
+        }
+    });
+
+    const data = await response.json();
+
+    results = results.concat(data.issues);
+    data.next? next = data.next : next = false;
+  }
+
+  return results;
+}
+
+
 resolver.define('generateReport', async (req) => {
   const projectId = req.payload.projectId;
   
@@ -44,13 +69,16 @@ resolver.define('generateReport', async (req) => {
   console.log(`Project data: ${projectData.name} id ${projectData.id}`);
 
   const trailing15WeeksIssuesClosed = await getTrailing15WeeksClosedIssues(projectId);
-
   console.log(`Trailing 15 weeks issues closed found ${trailing15WeeksIssuesClosed.length} issues.`);
 
   const countsByPeriod = getCountsPerPeriod(trailing15WeeksIssuesClosed, 1);
-
   console.log(`Counts by period: ${JSON.stringify(countsByPeriod)}`);
 
+  const currentBacklogIssues = await getCurrentBacklogIssues(projectId);
+  console.log(`Current backlog issues found ${currentBacklogIssues.length} issues.`);
+
+  const confidenceIntervals = calculateConfidenceIntervals(currentBacklogIssues, countsByPeriod);
+  console.log(`Confidence intervals: ${JSON.stringify(confidenceIntervals)}`);
   
   const report = { 
     project_id: projectData.id,
