@@ -51,6 +51,7 @@ resolver.define('generateReport', async (req) => {
 
   console.log(`Counts by period: ${JSON.stringify(countsByPeriod)}`);
 
+  
   const report = { 
     project_id: projectData.id,
     project_name: projectData.name,

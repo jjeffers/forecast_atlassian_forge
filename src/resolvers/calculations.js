@@ -5,28 +5,27 @@ function getCountsPerPeriod(issues, period_length_in_days=1, now=new Date()) {
         throw new Error("Period length must be greater than zero");
     }
 
-    counts = {}
-
+    let counts = {};
     let date = null;
     let daysAgo = null;
 
+    console.log(`Calculating counts per period for ${issues.length} issues`);
 
     issues.map((issue) => {
-        date = new Date(issue.resolutiondate);
+
+        date = new Date(issue.fields.resolutiondate);
         let differenceInTime = date.getTime() - now.getTime();
 
         let differenceInDays = Math.round
             (differenceInTime / (1000 * 3600 * 24))
 
-        daysAgo = Math.round(differenceInDays/period_length_in_days)
+        daysAgo = Math.abs(Math.round(differenceInDays/period_length_in_days))
 
-        index = daysAgo
-
-        if (!(index in counts)) {
-            counts[index] = 1
+        if (!(daysAgo in counts)) {
+            counts[daysAgo] = 1
         }
         else {
-            counts[index] += 1
+            counts[daysAgo] += 1
         }
     });
 
