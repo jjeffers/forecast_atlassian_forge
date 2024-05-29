@@ -44,7 +44,7 @@ export default function ForecastReport({reportData}) {
         key: `row-${index}-${line.issueId}`,
         cells: [
           {
-            content: <Text>{line.issueKey}</Text>
+            content: <Text>{line.issue_key}</Text>
           },
           {
             content: <Text>{line.status}</Text>,

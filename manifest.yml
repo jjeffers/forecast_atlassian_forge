@@ -6,7 +6,17 @@ modules:
         function: resolver
       render: native
       title: forecast
+  consumer:
+    - key: queue-consumer
+      # Name of the queue for which this consumer will be invoked
+      queue: reports
+      resolver:
+        function: consumer-function
+        # resolver function to be called with payload
+        method: event-listener
   function:
+    - key: consumer-function
+      handler: index.handler
     - key: resolver
       handler: index.handler
 resources:

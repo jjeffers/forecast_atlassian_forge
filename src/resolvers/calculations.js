@@ -81,7 +81,7 @@ function conductTrials(countsByPeriodDictionary, issueDepth, growthRate) {
 }
 
 function calculateConfidenceIntervals(unresolvedIssues, countsByPeriodDictionary, growthRate = 1.0){
-    report_issues = []
+    reportIssues = []
 
     totalIssueDepth = unresolvedIssues.length;
 
@@ -102,9 +102,11 @@ function calculateConfidenceIntervals(unresolvedIssues, countsByPeriodDictionary
           data: trial_data,
       }
 
-      report_issues.push(issue_data);
+      reportIssues.push(issue_data);
         
     });
+
+    return reportIssues;
 }
 
 module.exports = { getCountsPerPeriod, calculateConfidenceIntervals, conductTrials, conductTrial }
