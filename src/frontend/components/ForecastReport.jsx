@@ -2,6 +2,10 @@ import React, { useEffect, useState, Fragment } from 'react';
 import { DynamicTable } from "@forge/react";
 import { Text } from "@forge/react";
 
+function formatReportCreationDate(date) {
+    return new Date(date).toLocaleTimeString('en-US');
+}
+
 export default function ForecastReport({reportData}) {
     
     const head = {
@@ -70,7 +74,7 @@ export default function ForecastReport({reportData}) {
     return (
         <>
           <DynamicTable
-            caption={`Forecast Report for ${reportData.projectName}`}
+            caption={`Forecast Report for ${reportData.project_name}, generated at ${formatReportCreationDate(reportData.created_at)}`}
             head={head}
             rows={rows}
           />

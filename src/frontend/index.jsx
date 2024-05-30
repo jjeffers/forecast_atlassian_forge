@@ -43,7 +43,6 @@ const App = () => {
       <>
           {projectData ? <ProjectSelect  projects={projectData} 
             onChange={ handleProjectSelecton } /> : 'Loading...'}   
-          {projectId ? <Text>Selected project: {projectId}</Text> : null}
           {projectId ? 
             currentReport ? <ForecastReport reportData={currentReport} /> :null
             : null }

@@ -1,11 +1,13 @@
 import Resolver from '@forge/resolver';
 import api, { route } from "@forge/api";
-import { storage } from "@forge/api";
-import { Queue } from '@forge/events';
+import { storage, startsWith } from "@forge/api";
+import { Queue, JobDoesNotExistError } from '@forge/events';
 
 import { calculateConfidenceIntervals, getCountsPerPeriod } from "./calculations";
 
 const resolver = new Resolver();
+const queueName = 'reports';
+const queue = new Queue({ key: queueName});
 
 const getTrailing15WeeksClosedIssues = async (projectId) => {
   let results = [];
@@ -49,14 +51,14 @@ const getCurrentBacklogIssues = async (projectId) => {
       const data = await response.json();
       console.log(`Response: ${response.status} ${response.statusText}`);
       results = results.concat(data.issues);
-      data.next? next = data.next : next = false;
+      next = false;
     }
   
     return results;
 }
 
-function isFreshReport(reportDate, now=new Date(), timeout=1000*60*10) {
-  return (now - reportDate) <= timeout;
+function isStaleReport(reportDate, now=new Date(), timeout=1000*60*10) {
+  return (now - reportDate) > timeout;
 }
 
 resolver.define('getCurrentReport', async (req) => {
@@ -66,7 +68,11 @@ resolver.define('getCurrentReport', async (req) => {
   const currentReportData = await storage.get(projectId);
   const currentReport = currentReportData? JSON.parse(currentReportData) : {};
 
-  if (currentReport && (isFreshReport(new Date(currentReport.created_at)))) {
+  if (isStaleReport(currentReport.created_at)) {
+    console.log(`Cached report found for project id ${projectId} is stale, generating a new one...`);
+  }
+
+  if (currentReport) {
     console.log(`Cached report found for project id ${projectId}`);
     return currentReport;
   }
@@ -78,13 +84,14 @@ resolver.define('getCurrentReport', async (req) => {
 
 resolver.define('generateCurrentReport', async (req) => {
   const projectId = req.payload.projectId;
-  const queueName = 'reports';
-  const jobId = null;
-
+  
   console.log(`Queing new report for ${projectId}...`);
 
-  const queue = new Queue({ key: queueName });
-  return await queue.push({projectId: projectId});
+  const jobId = await queue.push({projectId: projectId});
+
+  storage.set('job' + ':' + projectId + ':' + jobId, {});
+
+  return jobId;
 })
 
 resolver.define('getProjects', async (req) => {
@@ -107,6 +114,35 @@ resolver.define("event-listener", async ({ payload, context }) => {
 
   const projectId = payload.projectId;
 
+  console.log(`Checking storage for current report jobs...`);
+  const currentJobs = await storage.query().limit(19)
+    .where('key', startsWith('job:' + projectId))
+    .getMany();
+
+
+  currentJobs.results.map((job) => {
+    const jobId = job.key.split(':')[2];
+    console.log(`Current job id ${jobId} found in storage.`);
+
+    try {
+      const jobProgress = queue.getJob(jobId);
+      const response = jobProgress.getStats();
+      const {success, inProgress, failed} = response.json();
+      console.log(`Job progress: ${success} success, ${inProgress} in progress, ${failed} failed.`);
+    }
+    catch(error) {
+      if (error instanceof JobDoesNotExistError) {
+        console.log(`Job ${jobId} does not exist in the queue. Removing from storage...`);
+        storage.delete(currentJob.key);
+      }
+      else {
+        console.log(error)
+      }
+    }
+ 
+    return
+  });
+  
   const response = await api.asApp()
     .requestJira(route`/rest/api/3/project/${projectId}`, {
       headers: {
