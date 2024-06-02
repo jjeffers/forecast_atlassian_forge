@@ -6,8 +6,7 @@ import { Queue, JobDoesNotExistError } from '@forge/events';
 import { calculateConfidenceIntervals, getCountsPerPeriod } from "./resolvers/calculations";
 
 const asyncResolver = new Resolver();
-const queueName = 'reports';
-const queue = new Queue({ key: queueName});
+const queue = new Queue({ key: 'reports' });
 
 const getTrailing15WeeksClosedIssues = async (projectId) => {
   let results = [];
@@ -66,27 +65,25 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
       .where('key', startsWith('job:' + projectId))
       .getMany();
   
-    currentJobs.results.map((job) => {
+    await currentJobs.results.map(async (job) => {
       const jobId = job.key.split(':')[2];
       console.log(`Current job id ${jobId} found in storage.`);
   
       try {
         const jobProgress = queue.getJob(jobId);
-        const response = jobProgress.getStats();
+        const response = await jobProgress.getStats();
         const {success, inProgress, failed} = response.json();
         console.log(`Job progress: ${success} success, ${inProgress} in progress, ${failed} failed.`);
       }
       catch(error) {
         if (error instanceof JobDoesNotExistError) {
           console.log(`Job ${jobId} does not exist in the queue. Removing from storage...`);
-          storage.delete(currentJob.key);
+          storage.delete(job.key);
         }
         else {
           console.log(error)
         }
       }
-   
-      return
     });
     
     const response = await api.asApp()
@@ -121,7 +118,7 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
       lines: reportIssues
     }
   
-    const currentReport = await storage.set(projectId, JSON.stringify(report));
+    await storage.set(projectId, JSON.stringify(report));
   });
   
   

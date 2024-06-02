@@ -6,8 +6,7 @@ import { Queue } from '@forge/events';
 import { isStaleReport } from "./utils";
 
 const resolver = new Resolver();
-const queueName = 'reports';
-const queue = new Queue({ key: queueName });
+const queue = new Queue({ key: 'reports' });
 
 async function generateCurrentReport(projectId) {
   console.log(`Queing new report for ${projectId}...`);
