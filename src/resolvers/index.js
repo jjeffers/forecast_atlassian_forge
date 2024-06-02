@@ -4,6 +4,8 @@ import { storage, startsWith } from "@forge/api";
 import { Queue, JobDoesNotExistError } from '@forge/events';
 
 import { calculateConfidenceIntervals, getCountsPerPeriod } from "./calculations";
+import { isStaleReport } from "./utils";
+import { invoke } from '@forge/bridge';
 
 const resolver = new Resolver();
 const queueName = 'reports';
@@ -57,8 +59,17 @@ const getCurrentBacklogIssues = async (projectId) => {
     return results;
 }
 
-function isStaleReport(reportDate, now=new Date(), timeout=1000*60*10) {
-  return (now - reportDate) > timeout;
+async function generateCurrentReport(projectId) {
+  console.log(`Queing new report for ${projectId}...`);
+
+  const jobId = await queue.push({projectId: projectId});
+
+  console.log(`Job id ${jobId} queued for project id ${projectId}.`);
+  console.log(`Storing key \"${'job' + ':' + projectId + ':' + jobId}\" in storage...`);
+
+  storage.set('job' + ':' + projectId + ':' + jobId, {});
+
+  return jobId;
 }
 
 resolver.define('getCurrentReport', async (req) => {
@@ -68,31 +79,24 @@ resolver.define('getCurrentReport', async (req) => {
   const currentReportData = await storage.get(projectId);
   const currentReport = currentReportData? JSON.parse(currentReportData) : {};
 
-  if (isStaleReport(currentReport.created_at)) {
-    console.log(`Cached report found for project id ${projectId} is stale, generating a new one...`);
+  if (Object.keys(currentReport).length === 0) {
+    console.log(`No cached report found for project id ${projectId}, generating one now...`);
+    generateCurrentReport(projectId);
+  }
+  else if (isStaleReport(currentReport.created_at)) {
+    console.log(`Cached report found for project id ${projectId}, created at ${new Date(currentReport.created_at)} is stale, generating a new one...`);
+    generateCurrentReport(projectId);
   }
 
   if (currentReport) {
     console.log(`Cached report found for project id ${projectId}`);
-    return currentReport;
   }
   else {
     console.log(`No cached report found for project id ${projectId}`);
-    return {};
   }
+
+  return currentReport;
 });
-
-resolver.define('generateCurrentReport', async (req) => {
-  const projectId = req.payload.projectId;
-  
-  console.log(`Queing new report for ${projectId}...`);
-
-  const jobId = await queue.push({projectId: projectId});
-
-  storage.set('job' + ':' + projectId + ':' + jobId, {});
-
-  return jobId;
-})
 
 resolver.define('getProjects', async (req) => {
   console.log('Fetching project information...');

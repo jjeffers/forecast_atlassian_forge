@@ -17,14 +17,11 @@ const App = () => {
 
   useEffect(() => {
     if (projectId) {
+      console.log(`Fetching current report for project id ${projectId}...`);
       invoke('getCurrentReport', { projectId: projectId })
       .then((data) => {
         if (Object.keys(data).length === 0) {
-          console.log("no report found")
-          invoke('generateCurrentReport', { projectId: projectId })
-          .then((data) => {
-            console.log(`Current report is being generated, job id ${data}`);
-          });
+          console.log("no report found");
         }
         else {
           console.log(`Current report found`);

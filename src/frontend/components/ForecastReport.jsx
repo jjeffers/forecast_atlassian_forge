@@ -3,7 +3,13 @@ import { DynamicTable } from "@forge/react";
 import { Text } from "@forge/react";
 
 function formatReportCreationDate(date) {
-    return new Date(date).toLocaleTimeString('en-US');
+    return new Date(date).toLocaleString('en-US');
+}
+
+function formatCIDatatoDate(daysFromNow) {
+    var date = new Date();
+    date.setDate(date.getDate() + daysFromNow);
+    return date.toLocaleDateString('en-US');
 }
 
 export default function ForecastReport({reportData}) {
@@ -57,16 +63,16 @@ export default function ForecastReport({reportData}) {
             content: <Text>icon here</Text>,
           },
           {
-            content: <Text>{line.data["99"]}</Text>,
+            content: <Text>{formatCIDatatoDate(line.data["99"])}</Text>,
           },
           {
-              content: <Text>{line.data["95"]}</Text>,
+              content: <Text>{formatCIDatatoDate(line.data["95"])}</Text>,
           },
           {
-              content: <Text>{line.data["85"]}</Text>,
+              content: <Text>{formatCIDatatoDate(line.data["85"])}</Text>,
           },
           {
-              content: <Text>{line.data["50"]}</Text>,
+              content: <Text>{formatCIDatatoDate(line.data["50"])}</Text>,
           },
         ],
       }));
