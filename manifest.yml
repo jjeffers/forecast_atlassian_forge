@@ -16,7 +16,7 @@ modules:
         method: event-listener
   function:
     - key: consumer-function
-      handler: index.handler
+      handler: asyncEvents.asyncJobHandler
     - key: resolver
       handler: index.handler
 resources:
