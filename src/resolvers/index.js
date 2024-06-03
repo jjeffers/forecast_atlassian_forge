@@ -32,7 +32,7 @@ resolver.define('getCurrentReport', async (req) => {
     console.log(`No cached report found for project id ${projectId}, generating one now...`);
     await generateCurrentReport(projectId);
   }
-  else if (isStaleReport(currentReport.created_at)) {
+  else if (isStaleReport(currentReport.created_at, new Date(), 1000*60*2)) {
     console.log(`Cached report found for project id ${projectId}, created at ${new Date(currentReport.created_at)} is stale, generating a new one...`);
     await generateCurrentReport(projectId);
   }

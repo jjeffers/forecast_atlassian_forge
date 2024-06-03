@@ -37,7 +37,7 @@ const getCurrentBacklogIssues = async (projectId) => {
     let next = true;
   
     console.log("getting current backlog issues...")
-    const request_route = route`/rest/api/3/search?jql=project=${projectId} AND Resolution is NULL ORDER BY Rank ASC&limit=100&startAt=0`;
+    const request_route = route`/rest/api/3/search?jql=project=${projectId} AND Resolution is NULL ORDER BY Rank ASC&limit=100&startAt=0&fields=issuetype`;
   
     while (next) {
       const response = await api.asApp()
@@ -49,6 +49,7 @@ const getCurrentBacklogIssues = async (projectId) => {
   
       const data = await response.json();
       console.log(`Response: ${response.status} ${response.statusText}`);
+      console.log(data.issues[0]);
       results = results.concat(data.issues);
       next = false;
     }
@@ -72,7 +73,7 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
       try {
         const jobProgress = queue.getJob(jobId);
         const response = await jobProgress.getStats();
-        const {success, inProgress, failed} = response.json();
+        const {success, inProgress, failed} = await response.json();
         console.log(`Job progress: ${success} success, ${inProgress} in progress, ${failed} failed.`);
       }
       catch(error) {

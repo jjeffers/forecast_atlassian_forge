@@ -1,6 +1,5 @@
 import React, { useEffect, useState, Fragment } from 'react';
-import { DynamicTable } from "@forge/react";
-import { Text } from "@forge/react";
+import { DynamicTable, Text, } from "@forge/react";
 
 function formatReportCreationDate(date) {
     return new Date(date).toLocaleString('en-US');
@@ -23,9 +22,6 @@ export default function ForecastReport({reportData}) {
           {
             key: "type",
             content: "Type",
-          },
-          {
-            key: "icon",
           },
           {
             key: "ci99",
@@ -57,10 +53,7 @@ export default function ForecastReport({reportData}) {
             content: <Text>{line.issue_key}</Text>
           },
           {
-            content: <Text>{line.status}</Text>,
-          },
-          {
-            content: <Text>icon here</Text>,
+            content: <Text>{line.issue_type}</Text>,
           },
           {
             content: <Text>{formatCIDatatoDate(line.data["99"])}</Text>,

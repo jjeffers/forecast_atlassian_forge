@@ -9,7 +9,7 @@ function getCountsPerPeriod(issues, period_length_in_days=1, now=new Date()) {
     let date = null;
     let daysAgo = null;
 
-    console.log(`Calculating counts per period for ${issues.length} issues`);
+    //console.debug(`Calculating counts per period for ${issues.length} issues`);
 
     issues.map((issue) => {
 
@@ -39,9 +39,9 @@ function conductTrial(countsByPeriodDictionary, issueDepth, growthRate) {
     while (trialDepth > 0) {
         var keys = Object.keys(countsByPeriodDictionary);
         countIndex = keys[Math.floor(keys.length * Math.random())];
-        console.log(`Simulating pace for trial depth ${trialDepth}, countIndex ${countIndex}`);
+        //console.debug(`Simulating pace for trial depth ${trialDepth}, countIndex ${countIndex}`);
         let simulatedPace = countsByPeriodDictionary[countIndex];
-        console.log(`Simulated pace: ${simulatedPace}`)
+        //console.debug(`Simulated pace: ${simulatedPace}`)
             
         trial_history.push(simulatedPace)
         trialDepth -= simulatedPace
@@ -64,12 +64,12 @@ function conductTrials(countsByPeriodDictionary, issueDepth, growthRate) {
         trials [i] = conductTrial(countsByPeriodDictionary, issueDepth, growthRate)
     }
 
-    console.log(`Trials: ${JSON.stringify(trials)}`)
-    console.log(`Trial values: ${Object.values(trials)}`)
+    //console.debug(`Trials: ${JSON.stringify(trials)}`)
+    //console.debug(`Trial values: ${Object.values(trials)}`)
     periods = Object.values(trials).map((trial) => trial['periods'] )
 
-    console.log(`Periods: ${JSON.stringify(periods)}`);
-    console.log(ss.quantile(periods, 0.99))
+    //console.log(`Periods: ${JSON.stringify(periods)}`);
+    //console.log(ss.quantile(periods, 0.99))
     confidenceIntervals = {
         "99": Math.round(ss.quantile(periods, 0.99)),
         "95": Math.round(ss.quantile(periods, 0.95)),
@@ -85,20 +85,17 @@ function calculateConfidenceIntervals(unresolvedIssues, countsByPeriodDictionary
 
     totalIssueDepth = unresolvedIssues.length;
 
-    console.log(`Calculating confidence intervals, ${totalIssueDepth} issues to run trials for.`);
+    //console.debug(`Calculating confidence intervals, ${totalIssueDepth} issues to run trials for.`);
 
     unresolvedIssues.map((issue, index) => {
 
-      console.log(`Conducting trials for issue #{issue.key}`);
+      //console.debug(`Conducting trials for issue #{issue.key}`);
       let trial_data = conductTrials(countsByPeriodDictionary, index+1, growthRate)
 
       let issue_data = {
           issue_external_id: issue.issue_id,
           issue_key: issue.key,
-          issue_summary: issue['summary'],
-          issue_createdate: issue.createdate,
-          issue_resolutiondate: issue.resolutiondate,
-          issue_data: issue.payload,
+          issue_type: issue.fields.issuetype.name,
           data: trial_data,
       }
 
