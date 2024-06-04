@@ -2,10 +2,10 @@ import Resolver from '@forge/resolver';
 import api, { route } from "@forge/api";
 import { storage, startsWith } from "@forge/api";
 import { Queue, JobDoesNotExistError } from '@forge/events';
-
 import { calculateConfidenceIntervals, getCountsPerPeriod } from "./resolvers/calculations";
 
 const asyncResolver = new Resolver();
+
 const queue = new Queue({ key: 'reports' });
 
 const getTrailing15WeeksClosedIssues = async (projectId) => {
@@ -60,7 +60,8 @@ const getCurrentBacklogIssues = async (projectId) => {
 asyncResolver.define("event-listener", async ({ payload, context }) => {
 
     const projectId = payload.projectId;
-  
+    console.log(`Received event-listener event for project ${projectId}...`);
+    console.log("Building report for project id " + projectId); 
     console.log(`Checking storage for current report jobs...`);
     const currentJobs = await storage.query().limit(19)
       .where('key', startsWith('job:' + projectId))
@@ -75,6 +76,10 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
         const response = await jobProgress.getStats();
         const {success, inProgress, failed} = await response.json();
         console.log(`Job progress: ${success} success, ${inProgress} in progress, ${failed} failed.`);
+        if (success || failed) {
+          console.log(`Job ${jobId} complete. Removing from storage...`);
+          storage.delete(job.key);
+        }
       }
       catch(error) {
         if (error instanceof JobDoesNotExistError) {
@@ -87,6 +92,8 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
       }
     });
     
+    
+    console.log(`Pulling project data for project id ${projectId}... `);
     const response = await api.asApp()
       .requestJira(route`/rest/api/3/project/${projectId}`, {
         headers: {
@@ -120,8 +127,9 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
     }
   
     await storage.set(projectId, JSON.stringify(report));
-  });
+    
+});
   
   
-  export const asyncJobHandler = asyncResolver.getDefinitions();
+export const asyncJobHandler = asyncResolver.getDefinitions();
   
