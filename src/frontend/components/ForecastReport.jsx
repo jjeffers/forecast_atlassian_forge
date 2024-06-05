@@ -76,6 +76,7 @@ export default function ForecastReport({reportData}) {
             caption={`Forecast Report for ${reportData.project_name}, generated at ${formatReportCreationDate(reportData.created_at)}`}
             head={head}
             rows={rows}
+            rowsPerPage={25}
           />
         </>
     );
