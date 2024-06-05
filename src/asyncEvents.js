@@ -10,12 +10,12 @@ const queue = new Queue({ key: 'reports' });
 
 const getTrailing15WeeksClosedIssues = async (projectId) => {
   let results = [];
-  let next = true;
-
+  let startAt = 0;
+  let issuesReturned = 1;
   console.log("getting trailing 15 weeks closed issues...")
-  const request_route = route`/rest/api/3/search?jql=project=${projectId} AND status=Done AND resolved >= -15w&limit=100&startAt=0`;
-
-  while (next) {
+  
+  while (issuesReturned > 0) {
+    let request_route = route`/rest/api/3/search?jql=project=${projectId} AND status=Done AND resolved >= -15w&startAt=${startAt}`;
     const response = await api.asApp()
       .requestJira(request_route, {
         headers: {
@@ -25,8 +25,10 @@ const getTrailing15WeeksClosedIssues = async (projectId) => {
 
     const data = await response.json();
 
+    startAt = startAt + data['total'];
+    console.debug(`Response: ${response.status} ${response.statusText} index ${startAt}`);
     results = results.concat(data.issues);
-    data.next? next = data.next : next = false;
+    issuesReturned = data.issues.length;
   }
 
   return results;
@@ -34,12 +36,13 @@ const getTrailing15WeeksClosedIssues = async (projectId) => {
 
 const getCurrentBacklogIssues = async (projectId) => {
     let results = [];
-    let next = true;
+    let startAt = 0;
+    let issuesReturned = 1;
   
     console.log("getting current backlog issues...")
-    const request_route = route`/rest/api/3/search?jql=project=${projectId} AND Resolution is NULL ORDER BY Rank ASC&limit=100&startAt=0&fields=issuetype`;
-  
-    while (next) {
+    
+    while (issuesReturned > 0) {
+      let request_route = route`/rest/api/3/search?jql=project=${projectId} AND Resolution is NULL ORDER BY Rank ASC&startAt=${startAt}&fields=issuetype`;
       const response = await api.asApp()
         .requestJira(request_route, {
           headers: {
@@ -48,10 +51,11 @@ const getCurrentBacklogIssues = async (projectId) => {
       });
   
       const data = await response.json();
-      console.log(`Response: ${response.status} ${response.statusText}`);
-      console.log(data.issues[0]);
+
+      console.debug(`Response: ${response.status} ${response.statusText} index ${startAt}`);
       results = results.concat(data.issues);
-      next = false;
+      issuesReturned = data.issues.length;
+      startAt = startAt + issuesReturned;
     }
   
     return results;
