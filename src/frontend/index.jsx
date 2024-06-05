@@ -17,6 +17,7 @@ const App = () => {
   useEffect(() => {
     console.log(`Project ID was set to ${projectId}`)
     fetchCurrentReport();
+    clearInterval(checkForUpdatedReport);
     setInterval(checkForUpdatedReport, 1000*60*1);
   }, [projectId]);
 
