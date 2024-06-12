@@ -72,12 +72,14 @@ export default function ForecastReport({reportData}) {
 
     return (
         <>
+          { reportData.lines.length === 0 ? <Text>No report data available. There may be no unresolved issues or the report generation hasn't completed yet.</Text> :
           <DynamicTable
             caption={`Forecast Report for ${reportData.project_name}, generated at ${formatReportCreationDate(reportData.created_at)}`}
             head={head}
             rows={rows}
-            rowsPerPage={25}
-          />
+            rowsPerPage={25} />
+          }
+          
         </>
     );
 }

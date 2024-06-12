@@ -27,14 +27,9 @@ const App = () => {
       console.log(`Fetching current report for project id ${projectId}...`);
       invoke('getCurrentReport', { projectId: projectId })
         .then((data) => {
-          if (Object.keys(data).length === 0) {
-            console.log("no report found");
-          }
-          else {
-            console.log(`Current report found`);
+            console.log(`Current report:`);
             console.log(data);
             setCurrentReport(data);
-          }
         })
     }
     else {
