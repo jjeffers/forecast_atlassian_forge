@@ -5,7 +5,7 @@ modules:
       resolver:
         function: resolver
       render: native
-      title: forecast
+      title: Issue Forecast
   consumer:
     - key: queue-consumer
       queue: reports
@@ -27,4 +27,4 @@ permissions:
 app:
   runtime:
     name: nodejs18.x
-  id: ari:cloud:ecosystem::app/13e1ba44-0e2b-4d70-a66a-0a914e2db088
+  id: ari:cloud:ecosystem::app/de661dc4-3d0a-4176-84db-9c86c6a69c19
