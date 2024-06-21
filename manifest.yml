@@ -25,6 +25,8 @@ permissions:
     - 'read:jira-work'
     - 'storage:app'
 app:
+  connect:
+    key: com.planzero.forecast
   runtime:
     name: nodejs18.x
   id: ari:cloud:ecosystem::app/de661dc4-3d0a-4176-84db-9c86c6a69c19
