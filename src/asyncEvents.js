@@ -119,7 +119,7 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
     const currentBacklogIssues = await getCurrentBacklogIssues(projectId);
     console.log(`Current backlog issues found ${currentBacklogIssues.length} issues.`);
 
-    let report = buildReport(currentBacklogIssues, countsByPeriod);
+    let report = buildReport(projectData.id, projectData.name, currentBacklogIssues, countsByPeriod);
    
     await storage.set(projectId, JSON.stringify(report));
     
