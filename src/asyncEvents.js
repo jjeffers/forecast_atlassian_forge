@@ -2,7 +2,8 @@ import Resolver from '@forge/resolver';
 import api, { route } from "@forge/api";
 import { storage, startsWith } from "@forge/api";
 import { Queue, JobDoesNotExistError } from '@forge/events';
-import { buildReport, getCountsPerPeriod } from "./resolvers/calculations";
+import { getCountsPerPeriod } from "./resolvers/calculations";
+import { buildReport } from "./resolvers/utils";
 
 const asyncResolver = new Resolver();
 
@@ -117,8 +118,7 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
   
     const currentBacklogIssues = await getCurrentBacklogIssues(projectId);
     console.log(`Current backlog issues found ${currentBacklogIssues.length} issues.`);
-    console.log(`example issue: ${JSON.stringify(currentBacklogIssues[0])}`)
-    
+
     let report = buildReport(currentBacklogIssues, countsByPeriod);
    
     await storage.set(projectId, JSON.stringify(report));
