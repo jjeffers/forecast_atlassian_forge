@@ -28,5 +28,11 @@ describe('conductTrials', () => {
     it('should a hash of confidence intervals with 50 quantile', () => {
         assert(confidence_intervals['50']);
     });
+
+    it('should return an empty dictionary if the counts dictionary is empty', () => {
+        let intervals = conductTrials({}, 10, 1.0);
+        assert.equal(Object.keys(intervals).length, 0);
+    });
+
     
 });

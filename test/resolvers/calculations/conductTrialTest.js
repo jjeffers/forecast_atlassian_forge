@@ -20,6 +20,5 @@ describe('conductTrial', () => {
     it('should generate a hash containing a history value', () => {
         assert(Object.keys(counts['history']));
     });
-
     
 });

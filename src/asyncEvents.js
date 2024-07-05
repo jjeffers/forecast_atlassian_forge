@@ -2,7 +2,7 @@ import Resolver from '@forge/resolver';
 import api, { route } from "@forge/api";
 import { storage, startsWith } from "@forge/api";
 import { Queue, JobDoesNotExistError } from '@forge/events';
-import { calculateConfidenceIntervals, getCountsPerPeriod } from "./resolvers/calculations";
+import { buildReport, getCountsPerPeriod } from "./resolvers/calculations";
 
 const asyncResolver = new Resolver();
 
@@ -118,18 +118,9 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
     const currentBacklogIssues = await getCurrentBacklogIssues(projectId);
     console.log(`Current backlog issues found ${currentBacklogIssues.length} issues.`);
     console.log(`example issue: ${JSON.stringify(currentBacklogIssues[0])}`)
-    const reportIssues = calculateConfidenceIntervals(currentBacklogIssues, countsByPeriod);
-    console.log(`Confidence intervals: ${JSON.stringify(confidenceIntervals)}`);
-  
     
-    const report = {
-      created_at: new Date(),
-      project_id: projectData.id,
-      project_name: projectData.name,
-      counts_by_period: {},
-      lines: reportIssues
-    }
-  
+    let report = buildReport(currentBacklogIssues, countsByPeriod);
+   
     await storage.set(projectId, JSON.stringify(report));
     
 });

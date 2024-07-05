@@ -57,7 +57,7 @@ function conductTrials(countsByPeriodDictionary, issueDepth, growthRate) {
     numberOfTrials = 100
 
     if (Object.keys(countsByPeriodDictionary).length <= 0) {
-        throw Error("countsByPeriodDictionary is empty")
+        return {};
     }
 
     for(let i = 0; i < numberOfTrials ; i++) {
