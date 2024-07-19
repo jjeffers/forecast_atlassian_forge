@@ -6,6 +6,8 @@ function isStaleReport(reportDateString, now=new Date(), timeout=1000*60*10) {
 }
 
 function buildReport(projectId, projectName, backlogIssues, countsByPeriod, now = new Date()) {
+
+    console.log(`${projectId} building report`)
     const reportIssues = calculateConfidenceIntervals(backlogIssues, countsByPeriod);
   
     const report = {

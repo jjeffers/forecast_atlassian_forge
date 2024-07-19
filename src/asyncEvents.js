@@ -13,7 +13,7 @@ const getTrailing15WeeksClosedIssues = async (projectId) => {
   let results = [];
   let startAt = 0;
   let issuesReturned = 1;
-  console.log("getting trailing 15 weeks closed issues...")
+  console.log(`${projectId} getting trailing 15 weeks closed issues...`);
   
   while (issuesReturned > 0) {
     let request_route = route`/rest/api/3/search?jql=project=${projectId} AND status=Done AND resolved >= -15w&startAt=${startAt}`;
@@ -27,7 +27,7 @@ const getTrailing15WeeksClosedIssues = async (projectId) => {
     const data = await response.json();
 
     startAt = startAt + data['total'];
-    console.debug(`Response: ${response.status} ${response.statusText} index ${startAt}`);
+    console.debug(`${projectId} Response: ${response.status} ${response.statusText} index ${startAt}`);
     results = results.concat(data.issues);
     issuesReturned = data.issues.length;
   }
@@ -40,12 +40,20 @@ const getCurrentBacklogIssues = async (projectId) => {
     let startAt = 0;
     let issuesReturned = 1;
   
-    console.log("getting current backlog issues...")
+    console.log(`${projectId} Fetching current backlog issues...`)
     
     while (issuesReturned > 0) {
-      let request_route = route`/rest/api/3/search?jql=project=${projectId} AND Resolution is NULL ORDER BY Rank ASC&startAt=${startAt}&fields=issuetype`;
+      const queryParams = new URLSearchParams({
+        jql: `project=${projectId} AND Resolution is NULL ORDER BY Rank ASC`,
+        startAt: startAt,
+        fields: 'issuetype'
+      });
+
+      let requestRouteString = `/rest/api/3/search?${queryParams}`;
+      console.debug(`${projectId} requestJIRA path ${requestRouteString}`);
+
       const response = await api.asApp()
-        .requestJira(request_route, {
+        .requestJira(route`/rest/api/3/search?${queryParams}`, {
           headers: {
             'Accept': 'application/json'
           }
@@ -53,10 +61,17 @@ const getCurrentBacklogIssues = async (projectId) => {
   
       const data = await response.json();
 
-      console.debug(`Response: ${response.status} ${response.statusText} index ${startAt}`);
-      results = results.concat(data.issues);
-      issuesReturned = data.issues.length;
-      startAt = startAt + issuesReturned;
+      console.debug(`${projectId} Response: ${response.status} ${response.statusText} index ${startAt}`);
+
+      if (response.status == 200) {
+        results = results.concat(data.issues);
+        issuesReturned = data.issues.length;
+        startAt = startAt + issuesReturned;
+      }
+      else {
+        console.error(`${projectId} Current issue fetch request error: response: ${response.status} ${response.statusText}`);
+        issuesReturned = 0;
+      }
     }
   
     return results;
@@ -65,30 +80,29 @@ const getCurrentBacklogIssues = async (projectId) => {
 asyncResolver.define("event-listener", async ({ payload, context }) => {
 
     const projectId = payload.projectId;
-    console.log(`Received event-listener event for project ${projectId}...`);
-    console.log("Building report for project id " + projectId); 
-    console.log(`Checking storage for current report jobs...`);
+    console.log(`${projectId} Received event-listener event`);
+    console.log(`${projectId} Checking storage for current report jobs...`);
     const currentJobs = await storage.query().limit(19)
       .where('key', startsWith('job:' + projectId))
       .getMany();
   
     await currentJobs.results.map(async (job) => {
       const jobId = job.key.split(':')[2];
-      console.log(`Current job id ${jobId} found in storage.`);
+      console.log(`${projectId} Current job id ${jobId} found in storage.`);
   
       try {
         const jobProgress = queue.getJob(jobId);
         const response = await jobProgress.getStats();
         const {success, inProgress, failed} = await response.json();
-        console.log(`Job progress: ${success} success, ${inProgress} in progress, ${failed} failed.`);
+        console.log(`${projectId} Job progress: ${success} success, ${inProgress} in progress, ${failed} failed.`);
         if (success || failed) {
-          console.log(`Job ${jobId} complete. Removing from storage...`);
+          console.log(`${projectId} Job ${jobId} complete. Removing from storage...`);
           storage.delete(job.key);
         }
       }
       catch(error) {
         if (error instanceof JobDoesNotExistError) {
-          console.log(`Job ${jobId} does not exist in the queue. Removing from storage...`);
+          console.log(`${projectId} Job ${jobId} does not exist in the queue. Removing from storage...`);
           storage.delete(job.key);
         }
         else {
@@ -97,8 +111,10 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
       }
     });
     
+    console.log(`${projectId} Completed checking storage for current report jobs`);
     
-    console.log(`Pulling project data for project id ${projectId}... `);
+    console.log(`${projectId} Preparing to generate a new report. `)
+    console.log(`${projectId} Pulling project data`);
     const response = await api.asApp()
       .requestJira(route`/rest/api/3/project/${projectId}`, {
         headers: {
@@ -108,19 +124,20 @@ asyncResolver.define("event-listener", async ({ payload, context }) => {
   
     const projectData = await response.json();
   
-    console.log(`Project data: ${projectData.name} id ${projectData.id}`);
+    console.log(`${projectId} Project data: ${projectData.name}`);
   
     const trailing15WeeksIssuesClosed = await getTrailing15WeeksClosedIssues(projectId);
-    console.log(`Trailing 15 weeks issues closed found ${trailing15WeeksIssuesClosed.length} issues.`);
+    console.log(`${projectId} Trailing 15 weeks issues closed found ${trailing15WeeksIssuesClosed.length} issues.`);
   
     const countsByPeriod = getCountsPerPeriod(trailing15WeeksIssuesClosed, 1);
-    console.log(`Counts by period: ${JSON.stringify(countsByPeriod)}`);
+    console.log(`${projectId} Counts by period: ${JSON.stringify(countsByPeriod)}`);
   
     const currentBacklogIssues = await getCurrentBacklogIssues(projectId);
-    console.log(`Current backlog issues found ${currentBacklogIssues.length} issues.`);
+    console.log(`${projectId} Current backlog issues found ${currentBacklogIssues.length} issues.`);
 
     let report = buildReport(projectData.id, projectData.name, currentBacklogIssues, countsByPeriod);
    
+    console.log(`${projectId} Report data: ${JSON.stringify(report)}`);
     await storage.set(projectId, JSON.stringify(report));
     
 });

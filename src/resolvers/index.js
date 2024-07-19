@@ -24,24 +24,24 @@ async function generateCurrentReport(projectId) {
 resolver.define('getCurrentReport', async (req) => {
   const projectId = req.payload.projectId;
 
-  console.log(`Checking for cached report for project id ${projectId}...`);
+  console.log(`${projectId} Checking for cached report`);
   const currentReportData = await storage.get(projectId);
   const currentReport = currentReportData? JSON.parse(currentReportData) : {};
 
   if (Object.keys(currentReport).length === 0) {
-    console.log(`No cached report found for project id ${projectId}, generating one now...`);
+    console.log(`${projectId} No cached report found for project id ${projectId}, generating one now...`);
     await generateCurrentReport(projectId);
   }
   else if (isStaleReport(currentReport.created_at, new Date(), 1000*60*2)) {
-    console.log(`Cached report found for project id ${projectId}, created at ${new Date(currentReport.created_at)} is stale, generating a new one...`);
+    console.log(`${projectId} Cached report found for project id ${projectId}, created at ${new Date(currentReport.created_at)} is stale, generating a new one...`);
     await generateCurrentReport(projectId);
   }
 
   if (currentReport) {
-    console.log(`Cached report found for project id ${projectId}`);
+    console.log(`${projectId} Cached report found for project id ${projectId}`);
   }
   else {
-    console.log(`No cached report found for project id ${projectId}`);
+    console.log(`${projectId} No cached report found for project id ${projectId}`);
   }
 
   return currentReport;
